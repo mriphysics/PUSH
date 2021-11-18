@@ -30,7 +30,7 @@ set(gca,'Fontsize',14)
 box on; grid on; ylim([0 0.6])
 ax_obj = findobj(gca,'Type','Line');
 legend([ax_obj(5),ax_obj(3),ax_obj(2),ax_obj(1)],'CP mode','PUSH-1','PUSH-2','PUSH-3','Location','northwest') %
-title('2D imaging')
+title('2D optimization')
 text(-0.17,1.075,'(A)','Units','normalized','Fontsize',20,'Fontweight','bold')
 
 subplot(2,1,2)
@@ -47,6 +47,6 @@ set(gca,'Fontsize',14)
 box on; grid on; ylim([0 0.6])
 ax_obj = findobj(gca,'Type','Line');
 legend([ax_obj(5),ax_obj(3),ax_obj(2),ax_obj(1)],'CP mode','PUSH-1','PUSH-2','PUSH-3','Location','northwest')
-title('3D imaging')
+title('3D optimization')
 text(-0.17,1.075,'(B)','Units','normalized','Fontsize',20,'Fontweight','bold')
 

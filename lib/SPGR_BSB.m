@@ -11,7 +11,6 @@
 %                        pulses, sec
 %           tissuepars = structure containing all tissue parameters. See
 %                        init_tissue()
-%           Nt         = number of pulses to simulate
 %
 %  OUTPUTS:
 %           Mss        = Steady-state Mxy (after excitation pulse)
@@ -21,7 +20,25 @@
 % (c) Shaihan Malik 2019. King's College London
 %     Adapted by David Leitao 2020 to single MT saturation pulse
 
-function [Mss,Mt] = SPGR_BSB(b1pulse, dt, Delta_Hz, TR, pulse_sep, tissuepars, Nt, varargin)
+function [Mss,Mt] = SPGR_BSB(b1pulse, dt, Delta_Hz, TR, pulse_sep, tissuepars, varargin)
+
+
+for ii=1:length(varargin)
+    if strcmpi(varargin{ii},'FlipAngUni')
+        isFlipAngUni = true;
+        b1_uni = varargin{ii+1};
+    end
+    if strcmpi(varargin{ii},'AvgSatUni')
+        isAvgSatUni = true;
+        b1_uni = varargin{ii+1};
+    end
+end
+if ~exist('isFlipAngUni','var')
+    isFlipAngUni = false;
+end
+if ~exist('isAvgSatUni','var')
+    isAvgSatUni = false;
+end
 
 % unpack tissue parameters
 M0f = tissuepars.M0 * (1-tissuepars.f); 
@@ -72,11 +89,20 @@ Xtilde_norf_pulse_sep = expm(Lambda*pulse_sep);
 %% RF matrices and integrate over mean (1) excitation and (2) saturation pulses
 
 %(1) excitation pulse
-b1x = sum(real(b1pulse.exc))*dt;
-b1y = sum(imag(b1pulse.exc))*dt;
+if isFlipAngUni
+    b1x = sum(real(b1_uni))*dt;
+    b1y = sum(imag(b1_uni))*dt;
+else
+    b1x = sum(real(b1pulse.exc))*dt;
+    b1y = sum(imag(b1pulse.exc))*dt;
+end
 % calculate saturation
-w1 = gam * sqrt(sum(abs(b1pulse.exc).^2)*dt);
-w  = pi*w1^2*G(1); 
+if isAvgSatUni
+    w1 = gam * sqrt(sum(abs(b1_uni).^2)*dt);
+else
+    w1 = gam * sqrt(sum(abs(b1pulse.exc).^2)*dt);
+end
+w = pi*w1^2*G(1);
 
 Omega = [0          0          -gam*b1y    0   0;
          0          0           gam*b1x    0   0;
@@ -125,14 +151,5 @@ X = Xtilde_rf_exc * Phi * Xtilde_norf_pulse_sep * Xtilde_rf_sat * Phi * Xtilde_n
 [v,~,~] = eig(X);
 Mss = v(1:end-1,end)/v(end,end); % normalise to the last component so it stays as 1 (rounding errors from eig function)
 
-% simulate dynamics of transient state for Nt TRs (starting at equilibrium)
-if nargout>1
-    Mt = zeros(5, Nt+1);
-    Mt(:,1) = [0; 0; M0f; M0s; 1];
-    for nn=1:Nt
-        Mt(:,nn+1) = X * Mt(:,nn);
-    end
-    Mt(5,:) = [];
-end
 
 end
